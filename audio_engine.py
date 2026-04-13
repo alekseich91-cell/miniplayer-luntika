@@ -105,6 +105,9 @@ class AudioEngine(QObject):
         self._jingle_channel.play(sound)
         self._jingle_playing = True
 
+    def set_jingle_volume(self, volume: float) -> None:
+        self._jingle_channel.set_volume(max(0.0, min(1.0, volume)))
+
     def stop_jingle(self) -> None:
         self._jingle_channel.stop()
         self._jingle_playing = False

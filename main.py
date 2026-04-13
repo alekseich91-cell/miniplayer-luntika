@@ -85,6 +85,9 @@ def main():
             controller.trigger_jingle(files[index], volumes[index])
 
     window.jingle_list.jingle_triggered.connect(on_jingle_triggered)
+    window.jingle_list.volume_changed.connect(
+        lambda index, vol: engine.set_jingle_volume(vol) if engine.is_jingle_playing() else None
+    )
     window.jingle_list.files_changed.connect(save_state)
 
     # Save on setting changes
