@@ -68,7 +68,7 @@ class AudioEngine(QObject):
 
     def set_music_volume(self, volume: float) -> None:
         self._music_volume = max(0.0, min(1.0, volume))
-        if self._music_playing and not self._fade_timer.isActive():
+        if self._music_playing and not self._music_paused and not self._fade_timer.isActive():
             pygame.mixer.music.set_volume(self._music_volume)
             self._current_music_vol = self._music_volume
 
@@ -104,6 +104,10 @@ class AudioEngine(QObject):
         self._jingle_channel.set_volume(max(0.0, min(1.0, volume)))
         self._jingle_channel.play(sound)
         self._jingle_playing = True
+
+    def stop_jingle(self) -> None:
+        self._jingle_channel.stop()
+        self._jingle_playing = False
 
     def is_jingle_playing(self) -> bool:
         return self._jingle_playing

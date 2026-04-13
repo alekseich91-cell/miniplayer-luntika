@@ -64,6 +64,7 @@ def main():
     # GUI -> Controller
     window.play_clicked.connect(controller.play)
     window.stop_clicked.connect(controller.stop)
+    window.stop_jingle_clicked.connect(controller.stop_jingle)
     window.repeat_mode_changed.connect(controller.set_repeat_mode)
     window.background_volume_changed.connect(controller.set_background_volume)
     window.fade_out_changed.connect(controller.set_fade_out)

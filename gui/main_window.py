@@ -19,6 +19,7 @@ from gui.jingle_list import JingleList
 class MainWindow(QMainWindow):
     play_clicked = pyqtSignal()
     stop_clicked = pyqtSignal()
+    stop_jingle_clicked = pyqtSignal()
     repeat_mode_changed = pyqtSignal(str)
     background_volume_changed = pyqtSignal(float)
     fade_out_changed = pyqtSignal(float)
@@ -84,7 +85,12 @@ class MainWindow(QMainWindow):
         right = QWidget()
         right_layout = QVBoxLayout(right)
 
-        right_layout.addWidget(QLabel("Jingles"))
+        jingle_header = QHBoxLayout()
+        jingle_header.addWidget(QLabel("Jingles"))
+        self._stop_jingle_btn = QPushButton("Stop Jingle")
+        self._stop_jingle_btn.clicked.connect(self.stop_jingle_clicked.emit)
+        jingle_header.addWidget(self._stop_jingle_btn)
+        right_layout.addLayout(jingle_header)
 
         self.jingle_list = JingleList()
         right_layout.addWidget(self.jingle_list, stretch=1)

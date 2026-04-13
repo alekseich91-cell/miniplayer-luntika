@@ -17,7 +17,6 @@ class PlaybackController(QObject):
         self._fade_in: float = 2.0
         self._is_playing: bool = False
 
-        self._jingle_queue: list[tuple[str, float]] = []
         self._in_jingle_sequence: bool = False
         self._music_paused_for_jingle: bool = False
         self._had_music: bool = False
@@ -71,14 +70,17 @@ class PlaybackController(QObject):
             self.track_changed.emit(self._current_index)
 
     def trigger_jingle(self, path: str, volume: float) -> None:
+        # If a jingle is already playing, stop it and play the new one
         if self._in_jingle_sequence:
-            self._jingle_queue.append((path, volume))
-            return
+            self._engine.stop_jingle()
+            # Don't restore music — we're starting a new jingle immediately
 
         self._in_jingle_sequence = True
-        self._had_music = self._engine.is_music_playing()
+        # Only remember music state on the first jingle in a sequence
+        if not self._had_music:
+            self._had_music = self._engine.is_music_playing()
 
-        if self._had_music:
+        if self._had_music and not self._music_paused_for_jingle:
             self._engine.fade_music_volume(
                 0.0, self._fade_out, on_complete=self._on_fade_out_done
             )
@@ -86,17 +88,28 @@ class PlaybackController(QObject):
         self._engine.play_jingle(path, volume)
         self.jingle_started.emit()
 
-    def on_jingle_ended(self) -> None:
-        if self._jingle_queue:
-            path, volume = self._jingle_queue.pop(0)
-            self._engine.play_jingle(path, volume)
+    def stop_jingle(self) -> None:
+        if not self._in_jingle_sequence:
             return
-
+        self._engine.stop_jingle()
         self._in_jingle_sequence = False
 
         if self._had_music:
-            self._engine.unpause_music()
-            self._music_paused_for_jingle = False
+            if self._music_paused_for_jingle:
+                self._engine.unpause_music()
+                self._music_paused_for_jingle = False
+            self._engine.fade_music_volume(self._bg_volume, self._fade_in)
+
+        self._had_music = False
+        self.jingle_queue_finished.emit()
+
+    def on_jingle_ended(self) -> None:
+        self._in_jingle_sequence = False
+
+        if self._had_music:
+            if self._music_paused_for_jingle:
+                self._engine.unpause_music()
+                self._music_paused_for_jingle = False
             self._engine.fade_music_volume(self._bg_volume, self._fade_in)
 
         self._had_music = False

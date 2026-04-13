@@ -98,21 +98,40 @@ class TestJingleScenario:
         assert last_fade[0][0] == 0.7
         assert last_fade[0][1] == 1.5
 
-    def test_jingle_queue(self):
+    def test_new_jingle_interrupts_current(self):
         ctrl, engine = make_controller()
+        ctrl.set_fade_in(1.5)
+        ctrl.set_background_volume(0.7)
         engine.is_music_playing.return_value = True
-        engine.is_jingle_playing.return_value = True
 
         ctrl.trigger_jingle("/j1.mp3", 0.8)
-        ctrl.trigger_jingle("/j2.mp3", 0.5)
-
-        assert engine.play_jingle.call_count == 1
         assert engine.play_jingle.call_args == call("/j1.mp3", 0.8)
 
-        engine.is_jingle_playing.return_value = False
-        ctrl.on_jingle_ended()
+        # Second jingle interrupts the first
+        ctrl.trigger_jingle("/j2.mp3", 0.5)
+        engine.stop_jingle.assert_called_once()
         assert engine.play_jingle.call_args == call("/j2.mp3", 0.5)
-        engine.unpause_music.assert_not_called()
 
+        # When second jingle ends, music fades back in
         ctrl.on_jingle_ended()
+        last_fade = engine.fade_music_volume.call_args_list[-1]
+        assert last_fade[0][0] == 0.7
+        assert last_fade[0][1] == 1.5
+
+    def test_stop_jingle(self):
+        ctrl, engine = make_controller()
+        ctrl.set_fade_in(1.0)
+        ctrl.set_background_volume(0.6)
+        engine.is_music_playing.return_value = True
+
+        ctrl.trigger_jingle("/j.mp3", 0.8)
+        # Simulate fade out done
+        fade_callback = engine.fade_music_volume.call_args[1]["on_complete"]
+        fade_callback()
+
+        ctrl.stop_jingle()
+        engine.stop_jingle.assert_called_once()
         engine.unpause_music.assert_called_once()
+        last_fade = engine.fade_music_volume.call_args_list[-1]
+        assert last_fade[0][0] == 0.6
+        assert last_fade[0][1] == 1.0
