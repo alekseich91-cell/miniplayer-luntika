@@ -15,8 +15,9 @@ Wrapper over pygame.mixer. Two logical stereo channels:
 
 Responsibilities:
 - Play/stop/pause/unpause on each channel
-- Fade out via `pygame.mixer.Channel.fadeout()`
-- Fade in via QTimer — incrementally raises volume from 0 to target over configured duration
+- Fade out via QTimer — incrementally lowers volume from current to 0, then pauses the channel (preserves playback position)
+- Fade in via QTimer — unpauses channel, incrementally raises volume from 0 to target
+- Note: `pygame.mixer.Channel.fadeout()` is NOT used — it stops the channel instead of pausing, which loses playback position
 - Volume control per channel
 - Status queries (is playing, current position)
 
@@ -72,6 +73,7 @@ PyQt6 widgets. Display and input only — all logic in controller. Communication
 - Right panel: jingle list (drag & drop to add and reorder), per-jingle volume slider next to each item. Double-click to trigger jingle.
 - Bottom bar: Fade Out slider (0–5 sec), Fade In slider (0–5 sec)
 - Currently playing track/jingle is highlighted in list
+- Track removal: select track + Delete key, or right-click context menu with "Remove"
 
 ## Playback Details
 
