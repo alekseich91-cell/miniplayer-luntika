@@ -134,7 +134,7 @@ class AudioEngine(QObject):
                 cb()
 
     def _poll_status(self) -> None:
-        for event in pygame.event.get():
+        for event in pygame.event.get(self._MUSIC_END):
             if event.type == self._MUSIC_END:
                 if self._music_playing and not self._music_paused:
                     self._music_playing = False
