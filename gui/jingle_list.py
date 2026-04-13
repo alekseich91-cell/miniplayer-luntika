@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import (
     QScrollArea,
     QMenu,
     QSizePolicy,
+    QPushButton,
 )
 from PyQt6.QtCore import pyqtSignal, Qt
 
@@ -20,6 +21,11 @@ class JingleRow(QWidget):
         super().__init__(parent)
         layout = QHBoxLayout(self)
         layout.setContentsMargins(4, 2, 4, 2)
+
+        self.play_btn = QPushButton("▶")
+        self.play_btn.setFixedSize(28, 28)
+        self.play_btn.clicked.connect(self.triggered.emit)
+        layout.addWidget(self.play_btn)
 
         self.label = QLabel(name)
         self.label.setSizePolicy(
@@ -41,9 +47,6 @@ class JingleRow(QWidget):
 
     def set_volume(self, volume: float) -> None:
         self.slider.setValue(int(volume * 100))
-
-    def mouseDoubleClickEvent(self, event):
-        self.triggered.emit()
 
 
 class JingleList(QWidget):
