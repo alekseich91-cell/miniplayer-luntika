@@ -13,13 +13,15 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, pyqtSignal
 from gui.track_list import TrackList
-from gui.jingle_list import JingleList
+from gui.jingle_tabs import JingleTabs
 
 
 class MainWindow(QMainWindow):
     play_clicked = pyqtSignal()
+    pause_clicked = pyqtSignal()
     stop_clicked = pyqtSignal()
     stop_jingle_clicked = pyqtSignal()
+    clear_tracks_clicked = pyqtSignal()
     repeat_mode_changed = pyqtSignal(str)
     background_volume_changed = pyqtSignal(float)
     fade_out_changed = pyqtSignal(float)
@@ -27,8 +29,8 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Music Player")
-        self.setMinimumSize(700, 500)
+        self.setWindowTitle("Miniплеер Лунтика")
+        self.setMinimumSize(800, 550)
 
         central = QWidget()
         self.setCentralWidget(central)
@@ -46,10 +48,13 @@ class MainWindow(QMainWindow):
 
         btn_row = QHBoxLayout()
         self._play_btn = QPushButton("Play")
+        self._pause_btn = QPushButton("Pause")
         self._stop_btn = QPushButton("Stop")
         self._play_btn.clicked.connect(self.play_clicked.emit)
+        self._pause_btn.clicked.connect(self.pause_clicked.emit)
         self._stop_btn.clicked.connect(self.stop_clicked.emit)
         btn_row.addWidget(self._play_btn)
+        btn_row.addWidget(self._pause_btn)
         btn_row.addWidget(self._stop_btn)
         left_layout.addLayout(btn_row)
 
@@ -66,7 +71,13 @@ class MainWindow(QMainWindow):
         self.track_list = TrackList()
         left_layout.addWidget(self.track_list, stretch=1)
 
-        left_layout.addWidget(QLabel("Drag & drop audio files here"))
+        track_bottom = QHBoxLayout()
+        track_bottom.addWidget(QLabel("Drag & drop audio files here"))
+        track_bottom.addStretch()
+        self._clear_tracks_btn = QPushButton("Clear All")
+        self._clear_tracks_btn.clicked.connect(self._on_clear_tracks)
+        track_bottom.addWidget(self._clear_tracks_btn)
+        left_layout.addLayout(track_bottom)
 
         vol_row = QHBoxLayout()
         vol_row.addWidget(QLabel("Volume:"))
@@ -81,7 +92,7 @@ class MainWindow(QMainWindow):
 
         splitter.addWidget(left)
 
-        # Right panel: jingles
+        # Right panel: jingles with tabs
         right = QWidget()
         right_layout = QVBoxLayout(right)
 
@@ -90,10 +101,13 @@ class MainWindow(QMainWindow):
         self._stop_jingle_btn = QPushButton("Stop Jingle")
         self._stop_jingle_btn.clicked.connect(self.stop_jingle_clicked.emit)
         jingle_header.addWidget(self._stop_jingle_btn)
+        self._clear_jingles_btn = QPushButton("Clear All")
+        self._clear_jingles_btn.clicked.connect(self._on_clear_jingles)
+        jingle_header.addWidget(self._clear_jingles_btn)
         right_layout.addLayout(jingle_header)
 
-        self.jingle_list = JingleList()
-        right_layout.addWidget(self.jingle_list, stretch=1)
+        self.jingle_tabs = JingleTabs()
+        right_layout.addWidget(self.jingle_tabs, stretch=1)
 
         right_layout.addWidget(QLabel("Drag & drop audio files here"))
 
@@ -142,6 +156,13 @@ class MainWindow(QMainWindow):
 
     def highlight_track(self, index: int) -> None:
         self.track_list.setCurrentRow(index)
+
+    def _on_clear_tracks(self) -> None:
+        self.track_list.set_files([])
+        self.clear_tracks_clicked.emit()
+
+    def _on_clear_jingles(self) -> None:
+        self.jingle_tabs.clear_all()
 
     def _on_repeat_changed(self, checked: bool) -> None:
         if self._radio_playlist.isChecked():

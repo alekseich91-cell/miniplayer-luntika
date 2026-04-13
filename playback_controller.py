@@ -50,6 +50,12 @@ class PlaybackController(QObject):
         self._is_playing = False
         self._engine.stop_music()
 
+    def pause(self) -> None:
+        if self._engine.is_music_paused():
+            self._engine.unpause_music()
+        else:
+            self._engine.pause_music()
+
     def play_track(self, index: int) -> None:
         if index < 0 or index >= len(self._playlist):
             return

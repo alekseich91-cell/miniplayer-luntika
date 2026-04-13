@@ -1,0 +1,31 @@
+{
+  "background": {
+    "files": [
+      "/Users/lunia/Downloads/RBC_mix_Yastrubitskaya.mp3"
+    ],
+    "volume": 0.42,
+    "repeat_mode": "playlist"
+  },
+  "jingles": {
+    "files": [
+      {
+        "path": "/Users/lunia/Downloads/12594 - \u0420\u0411\u041a Wellbeing/1. \u0420\u0411\u041a Wellbeing Review (\u0415\u0432\u0433\u0435\u043d\u0438\u0439 \u0422\u0438\u0445\u043e\u043d\u043e\u0432\u0438\u0447 \u0438 \u041a\u0438\u0440\u0430 \u0410\u043b\u044c\u0442\u043c\u0430\u043d) 1.wav",
+        "volume": 1.0
+      },
+      {
+        "path": "/Users/lunia/Downloads/archive/\u041e\u0442\u0431\u0438\u0432\u043a\u0430 \u0441\u043f\u0438\u043a\u0435\u0440\u044b 1.mp3",
+        "volume": 0.44
+      },
+      {
+        "path": "/Users/lunia/Downloads/archive/\u041e\u0442\u0431\u0438\u0432\u043a\u0430 \u0441\u043f\u0438\u043a\u0435\u0440\u044b 2.mp3",
+        "volume": 0.68
+      },
+      {
+        "path": "/Users/lunia/Downloads/12594 - \u0420\u0411\u041a Wellbeing/2. \u0418\u043d\u0432\u0435\u0441\u0442\u043f\u0438\u0442\u0447\u0438\u043d\u0433 (\u0432\u0435\u0434\u0443\u0449\u0430\u044f \u041c\u0430\u0440\u0438\u044f \u041a\u043e\u043c\u0430\u043d\u0434\u043d\u0430\u044f) 1.wav",
+        "volume": 1.0
+      }
+    ]
+  },
+  "fade_out": 1.5,
+  "fade_in": 1.4
+}

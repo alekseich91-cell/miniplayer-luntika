@@ -4,7 +4,7 @@ from PyQt6.QtWidgets import QApplication
 
 from audio_engine import AudioEngine
 from playback_controller import PlaybackController
-from state_manager import StateManager, PlayerState, JingleEntry
+from state_manager import StateManager, PlayerState, JingleEntry, JingleTab
 from gui.main_window import MainWindow
 
 
@@ -18,7 +18,7 @@ def get_state_path() -> str:
 
 def main():
     app = QApplication(sys.argv)
-    app.setApplicationName("Music Player")
+    app.setApplicationName("Miniплеер Лунтика")
 
     state_mgr = StateManager(get_state_path())
     state = state_mgr.load()
@@ -39,23 +39,36 @@ def main():
     window.set_repeat_mode(state.repeat_mode)
     window.set_fade_out(state.fade_out)
     window.set_fade_in(state.fade_in)
-    window.jingle_list.set_jingles(
-        [(j.path, j.volume) for j in state.jingles]
-    )
+
+    # Restore jingle tabs
+    if state.jingle_tabs:
+        window.jingle_tabs.set_tabs_data([
+            {
+                "name": tab.name,
+                "files": [{"path": j.path, "volume": j.volume} for j in tab.jingles],
+            }
+            for tab in state.jingle_tabs
+        ])
 
     # Save helper
     def save_state():
+        tabs_data = window.jingle_tabs.get_all_tabs_data()
+        jingle_tabs = [
+            JingleTab(
+                name=tab["name"],
+                jingles=[
+                    JingleEntry(path=f["path"], volume=f["volume"])
+                    for f in tab["files"]
+                ],
+            )
+            for tab in tabs_data
+        ]
         s = PlayerState(
             background_files=window.track_list.get_files(),
             background_volume=controller._bg_volume,
             repeat_mode=controller._repeat_mode,
-            jingles=[
-                JingleEntry(path=p, volume=v)
-                for p, v in zip(
-                    window.jingle_list.get_files(),
-                    window.jingle_list.get_volumes(),
-                )
-            ],
+            jingles=[],
+            jingle_tabs=jingle_tabs,
             fade_out=controller._fade_out,
             fade_in=controller._fade_in,
         )
@@ -63,6 +76,7 @@ def main():
 
     # GUI -> Controller
     window.play_clicked.connect(controller.play)
+    window.pause_clicked.connect(controller.pause)
     window.stop_clicked.connect(controller.stop)
     window.stop_jingle_clicked.connect(controller.stop_jingle)
     window.repeat_mode_changed.connect(controller.set_repeat_mode)
@@ -77,18 +91,18 @@ def main():
             save_state(),
         )
     )
+    window.clear_tracks_clicked.connect(
+        lambda: controller.set_background_playlist([])
+    )
 
-    def on_jingle_triggered(index: int):
-        files = window.jingle_list.get_files()
-        volumes = window.jingle_list.get_volumes()
-        if 0 <= index < len(files):
-            controller.trigger_jingle(files[index], volumes[index])
-
-    window.jingle_list.jingle_triggered.connect(on_jingle_triggered)
-    window.jingle_list.volume_changed.connect(
+    # Jingle tabs -> Controller
+    window.jingle_tabs.jingle_triggered.connect(
+        lambda path, vol: controller.trigger_jingle(path, vol)
+    )
+    window.jingle_tabs.volume_changed.connect(
         lambda index, vol: engine.set_jingle_volume(vol) if engine.is_jingle_playing() else None
     )
-    window.jingle_list.files_changed.connect(save_state)
+    window.jingle_tabs.files_changed.connect(save_state)
 
     # Save on setting changes
     window.background_volume_changed.connect(lambda _: save_state())
@@ -103,9 +117,9 @@ def main():
     # Controller -> GUI
     controller.track_changed.connect(window.highlight_track)
     controller.jingle_started.connect(
-        lambda: window.jingle_list.highlight_jingle(0)
+        lambda: window.jingle_tabs.highlight_jingle(0)
     )
-    controller.jingle_queue_finished.connect(window.jingle_list.clear_highlight)
+    controller.jingle_queue_finished.connect(window.jingle_tabs.clear_highlight)
 
     window.show()
     exit_code = app.exec()
