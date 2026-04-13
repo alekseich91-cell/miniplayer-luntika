@@ -38,9 +38,8 @@ class AudioEngine(QObject):
         self._poll_timer.timeout.connect(self._poll_status)
         self._poll_timer.start()
 
-        # Track end event
-        self._MUSIC_END = pygame.USEREVENT + 1
-        pygame.mixer.music.set_endevent(self._MUSIC_END)
+        # No pygame.display init — cannot use pygame.event subsystem.
+        # Detect music end via get_busy() polling instead.
 
     def play_music(self, path: str) -> None:
         pygame.mixer.music.load(path)
@@ -134,11 +133,12 @@ class AudioEngine(QObject):
                 cb()
 
     def _poll_status(self) -> None:
-        for event in pygame.event.get(self._MUSIC_END):
-            if event.type == self._MUSIC_END:
-                if self._music_playing and not self._music_paused:
-                    self._music_playing = False
-                    self.music_ended.emit()
+        # Detect music end via get_busy() — returns False when track finishes.
+        # Also returns False when paused, so we guard with our own flags.
+        if self._music_playing and not self._music_paused:
+            if not pygame.mixer.music.get_busy():
+                self._music_playing = False
+                self.music_ended.emit()
 
         if self._jingle_playing and not self._jingle_channel.get_busy():
             self._jingle_playing = False
