@@ -1,0 +1,76 @@
+import json
+import os
+from dataclasses import dataclass, field
+
+
+@dataclass
+class JingleEntry:
+    path: str
+    volume: float = 1.0
+
+
+@dataclass
+class PlayerState:
+    background_files: list[str] = field(default_factory=list)
+    background_volume: float = 0.8
+    repeat_mode: str = "playlist"
+    jingles: list[JingleEntry] = field(default_factory=list)
+    fade_out: float = 2.0
+    fade_in: float = 2.0
+
+
+class StateManager:
+    def __init__(self, path: str):
+        self._path = path
+
+    def load(self) -> PlayerState:
+        try:
+            with open(self._path, "r") as f:
+                data = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            return PlayerState()
+
+        try:
+            bg = data.get("background", {})
+            bg_files = [p for p in bg.get("files", []) if os.path.exists(p)]
+            bg_volume = float(bg.get("volume", 0.8))
+            repeat_mode = bg.get("repeat_mode", "playlist")
+
+            jingles_data = data.get("jingles", {}).get("files", [])
+            jingles = [
+                JingleEntry(path=j["path"], volume=float(j.get("volume", 1.0)))
+                for j in jingles_data
+                if os.path.exists(j.get("path", ""))
+            ]
+
+            fade_out = float(data.get("fade_out", 2.0))
+            fade_in = float(data.get("fade_in", 2.0))
+
+            return PlayerState(
+                background_files=bg_files,
+                background_volume=bg_volume,
+                repeat_mode=repeat_mode,
+                jingles=jingles,
+                fade_out=fade_out,
+                fade_in=fade_in,
+            )
+        except (KeyError, TypeError, ValueError):
+            return PlayerState()
+
+    def save(self, state: PlayerState) -> None:
+        data = {
+            "background": {
+                "files": state.background_files,
+                "volume": state.background_volume,
+                "repeat_mode": state.repeat_mode,
+            },
+            "jingles": {
+                "files": [
+                    {"path": j.path, "volume": j.volume} for j in state.jingles
+                ]
+            },
+            "fade_out": state.fade_out,
+            "fade_in": state.fade_in,
+        }
+        with open(self._path, "w") as f:
+            json.dump(data, f, indent=2)
