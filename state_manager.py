@@ -1,5 +1,6 @@
 import json
 import os
+import tempfile
 from dataclasses import dataclass, field
 
 
@@ -38,7 +39,7 @@ class StateManager:
 
             jingles_data = data.get("jingles", {}).get("files", [])
             jingles = [
-                JingleEntry(path=j["path"], volume=float(j.get("volume", 1.0)))
+                JingleEntry(path=j.get("path", ""), volume=float(j.get("volume", 1.0)))
                 for j in jingles_data
                 if os.path.exists(j.get("path", ""))
             ]
@@ -72,5 +73,15 @@ class StateManager:
             "fade_out": state.fade_out,
             "fade_in": state.fade_in,
         }
-        with open(self._path, "w") as f:
-            json.dump(data, f, indent=2)
+        try:
+            dir_ = os.path.dirname(self._path) or "."
+            fd, tmp_path = tempfile.mkstemp(dir=dir_, suffix=".tmp")
+            try:
+                with os.fdopen(fd, "w") as f:
+                    json.dump(data, f, indent=2)
+                os.replace(tmp_path, self._path)
+            except BaseException:
+                os.unlink(tmp_path)
+                raise
+        except OSError:
+            pass

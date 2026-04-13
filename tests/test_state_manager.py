@@ -1,5 +1,4 @@
 import json
-import os
 import pytest
 from state_manager import StateManager, PlayerState, JingleEntry
 
